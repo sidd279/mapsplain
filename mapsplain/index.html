@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mapsplain</title>
+  <meta name="description" content="Landmark-based, persona-driven directions: real routes explained the way a local uncle would.">
+  <meta name="theme-color" content="#173d2f">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Mapsplain home">
+      <img src="assets/logo.svg" alt="" width="36" height="36">
+      <span class="brand-text">
+        <span class="brand-name">Mapsplain</span>
+        <span class="brand-tag">Directions, the way a local would give them</span>
+      </span>
+    </a>
+    <button type="button" class="btn btn-ghost" id="creditsBtn">About &amp; Credits</button>
+  </header>
+
+  <main class="layout">
+    <aside class="panel controls" aria-label="Route settings">
+      <form id="routeForm" novalidate autocomplete="off">
+        <div class="field-group">
+          <div class="field" data-role="start">
+            <label for="startInput"><span class="dot dot-a">A</span> Start</label>
+            <div class="input-row">
+              <input id="startInput" type="text" placeholder="e.g. Mantri Square, Bengaluru" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="startSuggest">
+              <button type="button" class="icon-btn" data-action="search" data-target="start" title="Search this place" aria-label="Search start place">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg>
+              </button>
+              <button type="button" class="icon-btn" data-action="pick" data-target="start" title="Pick start on the map" aria-label="Pick start on the map" aria-pressed="false">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+              </button>
+            </div>
+            <ul class="suggest" id="startSuggest" role="listbox" hidden></ul>
+          </div>
+
+          <button type="button" class="swap-btn" id="swapBtn" title="Swap start and destination" aria-label="Swap start and destination">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3"/></svg>
+          </button>
+
+          <div class="field" data-role="end">
+            <label for="endInput"><span class="dot dot-b">B</span> Destination</label>
+            <div class="input-row">
+              <input id="endInput" type="text" placeholder="e.g. Sankey Tank, Bengaluru" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="endSuggest">
+              <button type="button" class="icon-btn" data-action="search" data-target="end" title="Search this place" aria-label="Search destination">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg>
+              </button>
+              <button type="button" class="icon-btn" data-action="pick" data-target="end" title="Pick destination on the map" aria-label="Pick destination on the map" aria-pressed="false">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+              </button>
+            </div>
+            <ul class="suggest" id="endSuggest" role="listbox" hidden></ul>
+          </div>
+          <p class="hint">Type a place and press <kbd>Enter</kbd> to search, or tap the pin and click the map.</p>
+        </div>
+
+        <fieldset class="segmented" id="profileGroup">
+          <legend>Travel mode</legend>
+          <label><input type="radio" name="profile" value="driving" checked><span>Driving</span></label>
+          <label><input type="radio" name="profile" value="walking"><span>Walking</span></label>
+        </fieldset>
+
+        <fieldset class="personas" id="personaGroup">
+          <legend>Who’s explaining?</legend>
+        </fieldset>
+
+        <label class="toggle">
+          <input type="checkbox" id="treeMode">
+          <span class="toggle-track" aria-hidden="true"><span class="toggle-thumb"></span></span>
+          <span class="toggle-text"><strong>Tree mode</strong><small>Prefer mapped, identified trees (banyan, neem…). Coverage varies a lot by area.</small></span>
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-big" id="explainBtn">Explain My Route</button>
+
+        <div class="demo-row">
+          <label for="demoSelect">Try a demo route</label>
+          <select id="demoSelect">
+            <option value="">Choose a bundled demo…</option>
+          </select>
+        </div>
+      </form>
+
+      <div class="status" id="status" role="status" aria-live="polite" hidden></div>
+    </aside>
+
+    <section class="stage">
+      <div class="map-wrap">
+        <div id="map" aria-label="Map"></div>
+        <div class="map-hint" id="pickHint" hidden></div>
+      </div>
+
+      <section class="results" id="results" aria-label="Directions">
+        <div class="empty" id="emptyState">
+          <img src="assets/empty.svg" alt="" width="160" height="120">
+          <h2>Where to, beta?</h2>
+          <p>Pick a start and a destination, choose who should explain, and press <strong>Explain My Route</strong>. No internet luck? Try a demo route.</p>
+        </div>
+
+        <div id="resultBody" hidden>
+          <div class="summary" id="summary"></div>
+          <div class="notices" id="notices"></div>
+
+          <div class="toolbar">
+            <div class="segmented compact" role="radiogroup" aria-label="Directions view" id="viewGroup">
+              <label><input type="radio" name="view" value="split" checked><span>Side by side</span></label>
+              <label><input type="radio" name="view" value="mapsplain"><span>Mapsplain</span></label>
+              <label><input type="radio" name="view" value="conventional"><span>Conventional</span></label>
+            </div>
+            <div class="toolbar-actions">
+              <button type="button" class="btn btn-ghost" id="confusedBtn">🤔 Uncle got confused</button>
+              <button type="button" class="btn btn-ghost" id="shareBtn">Share card</button>
+            </div>
+          </div>
+
+          <div class="voice" id="voiceBar">
+            <button type="button" class="btn btn-small btn-accent" id="voicePlay">▶ Read aloud</button>
+            <button type="button" class="btn btn-small" id="voicePause" disabled>Pause</button>
+            <button type="button" class="btn btn-small" id="voiceResume" disabled>Resume</button>
+            <button type="button" class="btn btn-small" id="voiceStop" disabled>Stop</button>
+            <label class="voice-lang">Voice
+              <select id="voiceLang"></select>
+            </label>
+            <span class="voice-note" id="voiceNote"></span>
+          </div>
+
+          <div class="col-heads" aria-hidden="true">
+            <span>Conventional</span>
+            <span>Mapsplain</span>
+          </div>
+          <ol class="directions" id="directions"></ol>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>Map data &amp; landmarks © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a> (ODbL)</span>
+    <span>Routing: <a href="https://project-osrm.org" target="_blank" rel="noopener">OSRM</a> · Search: <a href="https://nominatim.org" target="_blank" rel="noopener">Nominatim</a> · Landmarks: <a href="https://overpass-api.de" target="_blank" rel="noopener">Overpass API</a></span>
+    <span>Inspired by mainstream turn-by-turn apps like Google Maps; not affiliated with or endorsed by Google.</span>
+  </footer>
+
+  <dialog id="creditsDialog" class="dialog">
+    <form method="dialog" class="dialog-close-row"><button class="icon-btn" aria-label="Close">✕</button></form>
+    <h2>About Mapsplain</h2>
+    <p><strong>Mapsplain</strong> turns a real route into directions the way a local uncle gives them: landmarks, vague-but-honest distances, and “ask anyone after that”. It is a remix of conventional turn-by-turn navigation as popularised by <a href="https://www.google.com/maps" target="_blank" rel="noopener">Google Maps</a>, built for the STEAL//REMAKE remix hackathon.</p>
+    <h3>What we changed</h3>
+    <ul>
+      <li>Metre counts become conversational distances (“keep going for a bit”). Exact numbers stay in the conventional column.</li>
+      <li>Street names give way to real, mapped landmarks near each turn: temples, petrol pumps, bakeries, trees.</li>
+      <li>Four personas (Local Uncle, Auto Driver, Gen Z Bestie, Auntie) rewrite the same route in their own voice.</li>
+      <li>Side-by-side comparison, read-aloud, landmark match labels, a joke-only “Uncle got confused” button, tree mode and shareable cards.</li>
+    </ul>
+    <h3>How the landmark match label works</h3>
+    <p>Each landmark gets an internal 0–100 <em>match score</em> from: distance to the turn, whether it has a name, how recognisable its category is, how close it is to the route line, and whether it was already used. It measures how well a <em>map feature</em> fits the turn. It is <strong>not</strong> a probability that the real place still exists, is open, or is visible from the road.</p>
+    <h3>Data &amp; services</h3>
+    <ul>
+      <li>Map tiles, places and landmarks: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, available under the <a href="https://opendatacommons.org/licenses/odbl/" target="_blank" rel="noopener">Open Database License (ODbL)</a>.</li>
+      <li>Map library: <a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a> (BSD-2-Clause).</li>
+      <li>Routing: <a href="https://project-osrm.org" target="_blank" rel="noopener">OSRM</a> via the public demo server (driving) and <a href="https://routing.openstreetmap.de" target="_blank" rel="noopener">FOSSGIS routing.openstreetmap.de</a> (walking, and driving fallback).</li>
+      <li>Search: <a href="https://nominatim.org" target="_blank" rel="noopener">Nominatim</a> (OpenStreetMap Foundation server, used within its usage policy).</li>
+      <li>Landmarks: <a href="https://overpass-api.de" target="_blank" rel="noopener">Overpass API</a>.</li>
+      <li>Share cards: <a href="https://html2canvas.hertzen.com" target="_blank" rel="noopener">html2canvas</a> (MIT).</li>
+      <li>Voice: your browser’s built-in Web Speech API. Available voices depend on your device.</li>
+    </ul>
+    <p class="muted">Mapsplain is not affiliated with, sponsored by or endorsed by Google. No Google logos, assets or data are used. Public services are free community resources with no uptime guarantee: please use them gently.</p>
+  </dialog>
+
+  <dialog id="shareDialog" class="dialog dialog-wide">
+    <form method="dialog" class="dialog-close-row"><button class="icon-btn" aria-label="Close">✕</button></form>
+    <h2>Share your directions</h2>
+    <p class="muted">The card shows the place labels below. Edit them if you don’t want to share exact locations.</p>
+    <div class="share-fields">
+      <label>Start label <input type="text" id="shareStart" maxlength="60"></label>
+      <label>Destination label <input type="text" id="shareEnd" maxlength="60"></label>
+      <button type="button" class="btn btn-small" id="shareRefresh">Update preview</button>
+    </div>
+    <div class="share-stage" id="shareStage" aria-hidden="true"></div>
+    <div class="share-preview" id="sharePreview"><p class="muted">Rendering card…</p></div>
+    <div class="share-actions">
+      <button type="button" class="btn btn-primary" id="shareDownload" disabled>Download PNG</button>
+      <button type="button" class="btn" id="shareNative" hidden disabled>Share…</button>
+      <span class="share-status" id="shareStatus" role="status"></span>
+    </div>
+  </dialog>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script type="module" src="js/app.js"></script>
+  <noscript><p class="noscript">Mapsplain needs JavaScript to draw maps and routes.</p></noscript>
+</body>
+</html>
